@@ -36,33 +36,48 @@ def quantifire_extention(qs, n, clas):
         return quantifire_extention_A8(qs, n)
     
 def generate_qutantifire(n, clas):
-    sigma3 = []
+    quanifires = []
     q = deque()
-    q.append(([], 0))
+    q.append(([], 0)) #computable ralationから始める
     while len(q) > 0:
         qs, m = q.popleft()
         if m <= n:
-            sigma3.append(qs)
-            q.extend(quantifire_extention(qs, m, clas))
-    return sigma3
-    
+            quanifires.append(qs)  # class n以下なら量化子列を枚挙
+            q.extend(quantifire_extention(qs, m, clas)) # 後ろにくっつけて延長した量化子列を生成
+    return quanifires
+
+def unify(qs):
+    mask = [False]*len(qs)
+    for i in range(len(qs)-1):
+        if qs[i] == "E" and qs[i+1] == "E":
+            mask[i] = True
+        elif qs[i] == "A" and qs[i+1] == "A":
+            mask[i] = True
+    return [qs[i] for i in range(len(qs)) if not mask[i]]
+
 def is_reducible_extend(qs1, qs2, graph):
-    # 量化子列から共通の列を除いたものの関係をすでに知っていれば還元可能
-    pass
+    # 量化子列から共通の列を除いたものの関係をすでに知っていれば還元可能:TODO
+    return False
 def is_reducible_E8(qs1, qs2):
-    # E8をAEに書き換えたものは還元可能
-    pass
+    # E8をAEに書き換えたものは還元可能:TODO
+    return False
 def is_reducible_A8(qs1, qs2):
-    # A8をEAに書き換えたものは還元可能
-    pass
+    # A8をEAに書き換えたものは還元可能:TODO
+    return False
 def is_reducible_EEAA(qs1, qs2):
-    # 重複するAやEを削除したものに還元可能
-    pass
+    # 重複するAやEを削除したものが同じなら還元可能
+    return unify(qs1) == unify(qs2)
+
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
-    pass
+    j = 0
+    for i in range(len(qs1)):
+        if j < len(qs2) and qs1[i] == qs2[j]:
+            j += 1
+    return j == len(qs2)
 
-def is_reducible(qs1, qs2,graph):
+def is_reducible(qs1, qs2, graph):
+    # qs1 <=m qs2
     return is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
@@ -81,5 +96,6 @@ def generate_graph(n, clas):
             Graph.add_edge("".join(v[0]), "".join(v[1]))
 
 if __name__ == "__main__":
-    sigma3 = generate_qutantifire(3, "sigma")
+    # sigma3 = generate_qutantifire(3, "sigma")
     graph = generate_graph(3, "sigma")
+    print(graph)
