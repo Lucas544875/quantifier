@@ -102,7 +102,8 @@ def generate_graph(n, clas):
     Graph = nx.DiGraph()
     nodes = generate_qutantifire(n, clas)
     for i in nodes:
-        Graph.add_node(qs_to_id(i))
+        Graph.add_node(qs_to_id(i), label="".join(i))
+        Graph
 
     for v in itertools.permutations(nodes, 2):
         if is_reducible(v[0], v[1], Graph):
