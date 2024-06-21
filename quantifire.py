@@ -1,6 +1,7 @@
 from collections import deque
 import networkx as nx
 import itertools
+from networkx.drawing.nx_agraph import graphviz_layout
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
@@ -98,4 +99,5 @@ def generate_graph(n, clas):
 if __name__ == "__main__":
     # sigma3 = generate_qutantifire(3, "sigma")
     graph = generate_graph(3, "sigma")
-    print(graph)
+    pos = graphviz_layout(graph,prog="dot")
+    nx.draw(graph,pos=pos,with_labels=True) 
