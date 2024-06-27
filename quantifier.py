@@ -5,47 +5,47 @@ import itertools
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
-def quantifire_extention_init_sigma(qs, n):
+def quantifier_extension_init_sigma(qs, n):
     return [(qs+["E"], 1), (qs+["A8"], 2)]
-def quantifire_extention_init_pi(qs, n):
+def quantifier_extension_init_pi(qs, n):
     return [(qs+["A"], 1), (qs+["A8"], 2)]
 
-def quantifire_extention_E(qs, n):
+def quantifier_extension_E(qs, n):
     return [(qs+["A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
-def quantifire_extention_A(qs, n):
+def quantifier_extension_A(qs, n):
     return [(qs+["E"], n+1), (qs+["E8"], n+1), (qs+["A8"], n+2)]
-def quantifire_extention_E8(qs, n):
+def quantifier_extension_E8(qs, n):
     return [(qs+["A"], n+1), (qs+["E"], n), (qs+["E","E"], n), (qs+["A8"], n+1), (qs+["E8"], n+2)]
     # return [(qs+["A"], n+1), (qs+["E"], n), (qs+["A8"], n+1), (qs+["E8"], n+2)]
-def quantifire_extention_A8(qs, n):
+def quantifier_extension_A8(qs, n):
     return [(qs+["E"], n+1), (qs+["A"], n), (qs+["A","A"], n), (qs+["E8"], n+1), (qs+["A8"], n+2)]
     # return [(qs+["E"], n+1), (qs+["A"], n), (qs+["E8"], n+1), (qs+["A8"], n+2)]
 
-def quantifire_extention(qs, n, clas):
+def quantifier_extension(qs, n, clas):
     if qs == []:
         if clas == "sigma":
-            return quantifire_extention_init_sigma(qs, n)
+            return quantifier_extension_init_sigma(qs, n)
         elif clas == "pi":
-            return quantifire_extention_init_pi(qs, n)
+            return quantifier_extension_init_pi(qs, n)
     if qs[-1] == "E":
-        return quantifire_extention_E(qs, n)
+        return quantifier_extension_E(qs, n)
     elif qs[-1] == "A":
-        return quantifire_extention_A(qs, n)
+        return quantifier_extension_A(qs, n)
     elif qs[-1] == "E8":
-        return quantifire_extention_E8(qs, n)
+        return quantifier_extension_E8(qs, n)
     elif qs[-1] == "A8":
-        return quantifire_extention_A8(qs, n)
+        return quantifier_extension_A8(qs, n)
     
-def generate_qutantifire(n, clas):
-    quanifires = []
+def generate_quantifier(n, clas):
+    quantifiers = []
     q = deque()
     q.append(([], 0)) #computable ralationから始める
     while len(q) > 0:
         qs, m = q.popleft()
         if m <= n:
-            quanifires.append(qs)  # class n以下なら量化子列を枚挙
-            q.extend(quantifire_extention(qs, m, clas)) # 後ろにくっつけて延長した量化子列を生成
-    return quanifires
+            quantifiers.append(qs)  # class n以下なら量化子列を枚挙
+            q.extend(quantifier_extension(qs, m, clas)) # 後ろにくっつけて延長した量化子列を生成
+    return quantifiers
 
 def unify(qs):
     mask = [False]*len(qs)
@@ -102,7 +102,7 @@ def is_reducible(qs1, qs2, graph):
 
 def generate_graph(n, clas):
     Graph = nx.DiGraph()
-    nodes = generate_qutantifire(n, clas)
+    nodes = generate_quantifier(n, clas)
     for i in nodes:
         Graph.add_node( "." + "".join(i))
         Graph
