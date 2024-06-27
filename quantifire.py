@@ -1,6 +1,7 @@
 from collections import deque
 import networkx as nx
 import itertools
+# import pydot
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
@@ -84,35 +85,46 @@ def is_reducible(qs1, qs2, graph):
         or is_reducible_redundant(qs1, qs2)\
         or is_reducible_extend(qs1, qs2, graph)
 
-def qs_to_id(qs):
-    id = 0
-    for i in range(len(qs)):
-        id *= 5
-        if qs[i] == "E":
-            id += 1
-        elif qs[i] == "A":
-            id += 2
-        elif qs[i] == "E8":
-            id += 3
-        elif qs[i] == "A8":
-            id += 4
-    return id
+# def qs_to_id(qs):
+#     id = 0
+#     for i in range(len(qs)):
+#         id *= 5
+#         if qs[i] == "E":
+#             id += 1
+#         elif qs[i] == "A":
+#             id += 2
+#         elif qs[i] == "E8":
+#             id += 3
+#         elif qs[i] == "A8":
+#             id += 4
+#     return id
+
 
 def generate_graph(n, clas):
     Graph = nx.DiGraph()
     nodes = generate_qutantifire(n, clas)
     for i in nodes:
-        Graph.add_node(qs_to_id(i), label="".join(i))
+        Graph.add_node( "." + "".join(i))
         Graph
 
     for v in itertools.permutations(nodes, 2):
         if is_reducible(v[0], v[1], Graph):
-            Graph.add_edge(qs_to_id(v[0]), qs_to_id(v[1]))
+            Graph.add_edge( "." + "".join(v[0]), "." + "".join(v[1]))
+            # Graph.add_edge(qs_to_id(v[0]), qs_to_id(v[1]))
     return Graph
 
 if __name__ == "__main__":
     # sigma3 = generate_qutantifire(3, "sigma")
-    graph = generate_graph(3, "sigma")
+    graph = generate_graph(2, "sigma")
     # graph = nx.DiGraph([(1,2),(1,3),(2,4),(2,5),(3,6)])
-    g = nx.nx_agraph.to_agraph(graph)
-    g.draw('sigma3.png',prog='dot')
+    sccs = list(nx.strongly_connected_components(graph))
+    cg = nx.condensation(graph, sccs) 
+    names = {}
+    for node in cg.nodes:
+        names[node] = ", ".join(sccs[node])
+    print(names)
+    cg = nx.relabel_nodes(cg, names)
+    g = nx.nx_agraph.to_agraph(cg)
+    g.draw('sigma3-c.png',prog='dot')
+    # g.write_pdf('sigma3-c.pdf')
+
