@@ -57,18 +57,18 @@ def unify(qs):
     return [qs[i] for i in range(len(qs)) if not mask[i]]
 
 def is_reducible_extend(qs1, qs2, rels):
-    # 量化子列から共通の列を除いたものの関係をすでに知っていれば還元可能:TODO
     zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
     print(new_qs1, new_qs2)
     return (new_qs1, new_qs2) in rels
 def is_reducible_E8(qs1, qs2):
-    # E8をAEに書き換えたものは還元可能:TODO
-    return False
+    new_qs1 = itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1))
+    return new_qs1 == qs2
 def is_reducible_A8(qs1, qs2):
-    # A8をEAに書き換えたものは還元可能:TODO
-    return False
+    new_qs1 = itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs1))
+    print(list(new_qs1))
+    return new_qs1 == qs2
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
     return unify(qs1) == unify(qs2)
