@@ -6,14 +6,14 @@ import itertools
 # 量化子の列:(E, A, E8, A8)からなる配列
 
 def quantifier_extension_init_sigma(qs, n):
-    return [(qs+["E"], 1), (qs+["A8"], 2)]
+    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2)]
 def quantifier_extension_init_pi(qs, n):
-    return [(qs+["A"], 1), (qs+["A8"], 2)]
+    return [(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 
 def quantifier_extension_E(qs, n):
-    return [(qs+["A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
+    return [(qs+["A"], n+1), (qs+["A","A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
 def quantifier_extension_A(qs, n):
-    return [(qs+["E"], n+1), (qs+["E8"], n+1), (qs+["A8"], n+2)]
+    return [(qs+["E"], n+1),(qs+["E","E"], n+1), (qs+["E8"], n+1), (qs+["A8"], n+2)]
 def quantifier_extension_E8(qs, n):
     return [(qs+["A"], n+1), (qs+["E"], n), (qs+["E","E"], n), (qs+["A8"], n+1), (qs+["E8"], n+2)]
     # return [(qs+["A"], n+1), (qs+["E"], n), (qs+["A8"], n+1), (qs+["E8"], n+2)]
@@ -109,6 +109,7 @@ def qs_to_str(qs):
 
 def generate_graph(n, clas):
     nodes = generate_quantifier(n, clas)
+    print(nodes)
     rels = []
     for (qs1, qs2) in itertools.permutations(nodes, 2):
         if is_reducible(qs1, qs2, rels):
