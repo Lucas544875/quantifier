@@ -118,16 +118,11 @@ def generate_graph(n, clas):
     return Graph
 
 if __name__ == "__main__":
-    # sigma3 = generate_qutantifire(3, "sigma")
     graph = generate_graph(2, "sigma")
-    # graph = nx.DiGraph([(1,2),(1,3),(2,4),(2,5),(3,6)])
-    sccs = list(nx.strongly_connected_components(graph))
-    cg = nx.condensation(graph, sccs) 
-    names = {}
-    for node in cg.nodes:
-        names[node] = ", ".join(sccs[node])
-    print(names)
-    cg = nx.relabel_nodes(cg, names)
-    g = nx.nx_agraph.to_agraph(cg)
-    g.draw('sigma3-c.png',prog='dot')
-    # g.write_pdf('sigma3-c.pdf')
+    output = ""
+    for edge in graph.edges:
+        output += edge[0] + " " + edge[1] + "\n"
+    f = open("output.txt", "w")
+    f.write(output)
+    f.close()
+
