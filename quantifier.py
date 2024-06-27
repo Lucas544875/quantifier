@@ -1,6 +1,7 @@
 from collections import deque
 import networkx as nx
 import itertools
+import json
 # import pydot
 
 # 量化子の列:(E, A, E8, A8)からなる配列
@@ -126,11 +127,8 @@ def graph_from_nodes_rels(nodes,rels):
         
 
 if __name__ == "__main__":
-    graph = graph_from_nodes_rels(*generate_graph(2, "sigma"))
-    output = ""
-    for edge in graph.edges:
-        output += edge[0] + " " + edge[1] + "\n"
-    f = open("output.txt", "w")
-    f.write(output)
-    f.close()
+    nodes, rels = generate_graph(2, "sigma")
+    with open("output.json", "w") as f:
+        json.dump((nodes, rels), f)
+    
 
