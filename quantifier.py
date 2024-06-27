@@ -56,9 +56,13 @@ def unify(qs):
             mask[i] = True
     return [qs[i] for i in range(len(qs)) if not mask[i]]
 
-def is_reducible_extend(qs1, qs2, graph):
+def is_reducible_extend(qs1, qs2, rels):
     # 量化子列から共通の列を除いたものの関係をすでに知っていれば還元可能:TODO
-    return False
+    zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
+    no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
+    new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
+    print(new_qs1, new_qs2)
+    return (new_qs1, new_qs2) in rels
 def is_reducible_E8(qs1, qs2):
     # E8をAEに書き換えたものは還元可能:TODO
     return False
@@ -77,13 +81,13 @@ def is_reducible_redundant(qs1, qs2):
             j += 1
     return j == len(qs2)
 
-def is_reducible(qs1, qs2, graph):
+def is_reducible(qs1, qs2, rels):
     # qs1 <=m qs2
     return is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
         or is_reducible_redundant(qs1, qs2)\
-        or is_reducible_extend(qs1, qs2, graph)
+        or is_reducible_extend(qs1, qs2, rels)
 
 # def qs_to_id(qs):
 #     id = 0
@@ -106,19 +110,24 @@ def qs_to_str(qs):
         return "".join(qs)
 
 def generate_graph(n, clas):
-    Graph = nx.DiGraph()
     nodes = generate_quantifier(n, clas)
-    for i in nodes:
-        Graph.add_node(qs_to_str(i))
+    rels = []
+    for (qs1, qs2) in itertools.permutations(nodes, 2):
+        if is_reducible(qs1, qs2, rels):
+            rels.append((qs1, qs2))
+    return nodes,rels
 
-    for v in itertools.permutations(nodes, 2):
-        if is_reducible(v[0], v[1], Graph):
-            Graph.add_edge( qs_to_str(v[0]), qs_to_str(v[1]))
-            # Graph.add_edge(qs_to_id(v[0]), qs_to_id(v[1]))
+def graph_from_nodes_rels(nodes,rels):
+    Graph = nx.DiGraph()
+    for node in nodes:
+        Graph.add_node(qs_to_str(node))
+    for (qs1, qs2) in rels:
+        Graph.add_edge(qs_to_str(qs1), qs_to_str(qs2))
     return Graph
+        
 
 if __name__ == "__main__":
-    graph = generate_graph(2, "sigma")
+    graph = graph_from_nodes_rels(*generate_graph(2, "sigma"))
     output = ""
     for edge in graph.edges:
         output += edge[0] + " " + edge[1] + "\n"
