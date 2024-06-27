@@ -99,17 +99,21 @@ def is_reducible(qs1, qs2, graph):
 #             id += 4
 #     return id
 
+def qs_to_str(qs):
+    if qs == []:
+        return "C"
+    else:
+        return "".join(qs)
 
 def generate_graph(n, clas):
     Graph = nx.DiGraph()
     nodes = generate_qutantifire(n, clas)
     for i in nodes:
-        Graph.add_node( "." + "".join(i))
-        Graph
+        Graph.add_node(qs_to_str(i))
 
     for v in itertools.permutations(nodes, 2):
         if is_reducible(v[0], v[1], Graph):
-            Graph.add_edge( "." + "".join(v[0]), "." + "".join(v[1]))
+            Graph.add_edge( qs_to_str(v[0]), qs_to_str(v[1]))
             # Graph.add_edge(qs_to_id(v[0]), qs_to_id(v[1]))
     return Graph
 
@@ -127,4 +131,3 @@ if __name__ == "__main__":
     g = nx.nx_agraph.to_agraph(cg)
     g.draw('sigma3-c.png',prog='dot')
     # g.write_pdf('sigma3-c.pdf')
-
