@@ -62,10 +62,10 @@ def is_reducible_extend(qs1, qs2, rels):
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
     return (new_qs1, new_qs2) in rels
 def is_reducible_E8(qs1, qs2):
-    new_qs1 = itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1))
+    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1)))
     return new_qs1 == qs2
 def is_reducible_A8(qs1, qs2):
-    new_qs1 = itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs1))
+    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs1)))
     return new_qs1 == qs2
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
