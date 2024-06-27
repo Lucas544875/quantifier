@@ -111,9 +111,15 @@ def generate_graph(n, clas):
     nodes = generate_quantifier(n, clas)
     print(nodes)
     rels = []
-    for (qs1, qs2) in itertools.permutations(nodes, 2):
-        if is_reducible(qs1, qs2, rels):
-            rels.append((qs1, qs2))
+    flag = True
+    while flag:
+        flag = False
+        for (qs1, qs2) in itertools.permutations(nodes, 2):
+            if (qs1, qs2) in rels :
+                pass
+            elif is_reducible(qs1, qs2, rels):
+                rels.append((qs1, qs2))
+                flag = True
     return nodes,rels
 
 def graph_from_nodes_rels(nodes,rels):
