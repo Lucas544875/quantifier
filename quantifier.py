@@ -152,7 +152,7 @@ def generate_graph(n, clas):
                 count += 1
                 if count % 10000 == 0:
                     print(count)
-                if q1 == p2:
+                if (p1, q2) not in rels and q1 == p2:
                     rels.append((p1, q2))
                     closureFlag, flag = True, True
                 
