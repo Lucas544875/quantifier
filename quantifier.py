@@ -22,6 +22,12 @@ class Quantifier:
         return Quantifier(replace_A8(self.base_list))
     def level(self):
         return level(self.base_list)
+    def type(self):
+        match self.replace_A8().replace_E8().base_list[0]:
+            case "E":
+                return "S"
+            case "A":
+                return "P"
     def unify(self):
         return Quantifier(unify(self.base_list))
 
