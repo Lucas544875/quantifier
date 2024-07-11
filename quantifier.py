@@ -4,6 +4,27 @@ import itertools
 import json
 # import pydot
 
+class Quantifier:
+    def __init__(self, base_list):
+        self.base_list = base_list
+    def __repr__(self) -> str:
+        return qs_to_str(self.base_list)
+    def __hash__(self) -> int:
+        return hash(qs_to_str(self.base_list))
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return qs_to_str(self.base_list) == qs_to_str(other.base_list)
+        else:
+            return False
+    def replace_E8(self):
+        return Quantifier(replace_E8(self.base_list))
+    def replace_A8(self):
+        return Quantifier(replace_A8(self.base_list))
+    def level(self):
+        return level(self.base_list)
+    def unify(self):
+        return Quantifier(unify(self.base_list))
+
 # 量化子の列:(E, A, E8, A8)からなる配列
 
 #TODO: Make quantifier type as a subclass of list, make it hashable, and move to set
@@ -65,27 +86,27 @@ def level(qs):
     return len(unify(replace_E8(replace_A8(qs))))
 
 def is_reducible_extend(qs1, qs2, rels):
-    zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
+    qs1l, qs2l = qs1.base_list, qs2.base_list
+    zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
-    return (new_qs1, new_qs2) in rels
+    return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
 def is_reducible_E8(qs1, qs2):
-    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1)))
-    return new_qs1 == qs2
+    return qs1.replace_E8() == qs2
 def is_reducible_A8(qs1, qs2):
-    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs1)))
-    return new_qs1 == qs2
+    return qs1.replace_A8() == qs2
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
-    return unify(qs1) == unify(qs2)
+    return qs1.unify() == qs2.unify()
 
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
-    if qs1 == []:
+    qs1l,  qs2l = qs1.base_list, qs2.base_list
+    if qs1l == []:
         return True
-    if qs2 == []:
+    if qs2l == []:
         return False
-    i1, i2 = iter(qs1), iter(qs2)
+    i1, i2 = iter(qs1l), iter(qs2l)
     n1, n2 = next(i1), next(i2)
     while True:
         if n1 == n2:
@@ -98,8 +119,7 @@ def is_reducible_redundant(qs1, qs2):
         except:
             return False
 
-def is_reducible(qs1, qs2, rels):
-    # qs1 <=m qs2
+def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
     return is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
@@ -127,20 +147,17 @@ def qs_to_str(qs):
         return "".join(qs)
 
 def generate_graph(n, clas):
-    nodes = generate_quantifier(n, clas)
-    rels = []
+    nodes = [Quantifier(qs) for qs in generate_quantifier(n, clas)]
+    rels: set[tuple[Quantifier,Quantifier]] = set()
     flag = True
     count = 0
     while flag:
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            count += 1
-            if count % 10000 == 0:
-                print(count)
             if (qs1, qs2) in rels :
                 pass
             elif is_reducible(qs1, qs2, rels):
-                rels.append((qs1, qs2))
+                rels.add((qs1, qs2))
                 flag = True
         closureFlag = True
         while closureFlag:
@@ -151,7 +168,7 @@ def generate_graph(n, clas):
                 if count % 10000 == 0:
                     print(count)
                 if (p1, q2) not in rels and q1 == p2:
-                    rels.append((p1, q2))
+                    rels.add((p1, q2))
                     closureFlag, flag = True, True
                 
     return nodes,rels
@@ -159,14 +176,16 @@ def generate_graph(n, clas):
 def graph_from_nodes_rels(nodes,rels):
     Graph = nx.DiGraph()
     for node in nodes:
-        Graph.add_node(qs_to_str(node))
+        Graph.add_node(str(node))
     for (qs1, qs2) in rels:
-        Graph.add_edge(qs_to_str(qs1), qs_to_str(qs2))
+        Graph.add_edge(str(qs1), str(qs2))
     return Graph
         
 
 if __name__ == "__main__":
     nodes, rels = generate_graph(2, "sigma")
+    nodes = [node.base_list for node in nodes]
+    rels = [(p.base_list, q.base_list) for p,q in rels]
     with open("output.json", "w") as f:
         json.dump((nodes, rels), f)
     
