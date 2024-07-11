@@ -32,7 +32,8 @@ def quantifier_extension_init_sigma(qs, n):
     return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2)]
 def quantifier_extension_init_pi(qs, n):
     return [(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
-
+def quantifier_extension_init(qs,n):
+    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2),(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 def quantifier_extension_E(qs, n):
     return [(qs+["A"], n+1), (qs+["A","A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
 def quantifier_extension_A(qs, n):
@@ -44,12 +45,9 @@ def quantifier_extension_A8(qs, n):
     return [(qs+["E"], n+1), (qs+["A"], n), (qs+["A","A"], n), (qs+["E8"], n+1), (qs+["A8"], n+2)]
     # return [(qs+["E"], n+1), (qs+["A"], n), (qs+["E8"], n+1), (qs+["A8"], n+2)]
 
-def quantifier_extension(qs, n, clas):
+def quantifier_extension(qs, n):
     if qs == []:
-        if clas == "sigma":
-            return quantifier_extension_init_sigma(qs, n)
-        elif clas == "pi":
-            return quantifier_extension_init_pi(qs, n)
+        return quantifier_extension_init(qs, n)
     if qs[-1] == "E":
         return quantifier_extension_E(qs, n)
     elif qs[-1] == "A":
@@ -67,7 +65,7 @@ def generate_quantifier(n, clas):
         qs, m = q.popleft()
         if m <= n:
             quantifiers.append(qs)  # class n以下なら量化子列を枚挙
-            q.extend(quantifier_extension(qs, m, clas)) # 後ろにくっつけて延長した量化子列を生成
+            q.extend(quantifier_extension(qs, m)) # 後ろにくっつけて延長した量化子列を生成
     return quantifiers
 
 def unify(qs):
