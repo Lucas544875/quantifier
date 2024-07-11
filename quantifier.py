@@ -88,7 +88,8 @@ def level(qs):
     return len(unify(replace_E8(replace_A8(qs))))
 
 def is_reducible_extend(qs1, qs2, rels):
-    zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
+    qs1l, qs2l = qs1.base_list, qs2.base_list
+    zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
     return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
@@ -121,13 +122,11 @@ def is_reducible_redundant(qs1, qs2):
             return False
 
 def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
-    # qs1 <=m qs2
-    qs1l, qs2l = qs1.base_list, qs2.base_list
     return is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
         or is_reducible_redundant(qs1, qs2)\
-        or is_reducible_extend(qs1l, qs2l, rels)
+        or is_reducible_extend(qs1, qs2, rels)
 
 # def qs_to_id(qs):
 #     id = 0
