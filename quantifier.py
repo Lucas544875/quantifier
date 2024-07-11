@@ -61,7 +61,7 @@ def quantifier_extension_init_sigma(qs, n):
 def quantifier_extension_init_pi(qs, n):
     return [(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 def quantifier_extension_init(qs,n):
-    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2),(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
+    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["E8"], 2),(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 def quantifier_extension_E(qs, n):
     return [(qs+["A"], n+1), (qs+["A","A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
 def quantifier_extension_A(qs, n):
@@ -118,7 +118,7 @@ def is_reducible_extend(qs1, qs2, rels):
     zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
-    return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
+    return Quantifier(new_qs2) in rels[Quantifier(new_qs1)]
 def is_reducible_E8(qs1, qs2):
     return qs1.replace_E8() == qs2
 def is_reducible_A8(qs1, qs2):
@@ -176,7 +176,7 @@ def qs_to_str(qs):
 
 def generate_graph(n, clas):
     nodes = [Quantifier(qs) for qs in generate_quantifier(n, clas)]
-    rels: set[tuple[Quantifier,Quantifier]] = set()
+    rels: dict[Quantifier, set[Quantifier]] = {node : set() for node in nodes}
     flag = True
     count = 0
     while flag:
@@ -185,10 +185,10 @@ def generate_graph(n, clas):
         start = time.time()
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            if (qs1, qs2) in rels :
+            if qs2 in rels[qs1] :
                 pass
             elif is_reducible(qs1, qs2, rels):
-                rels.add((qs1, qs2))
+                rels[qs1].add(qs2)
                 flag = True
         closureFlag = True
         print(f"{time.time() - start:.3f}s to compute relations")
@@ -196,31 +196,26 @@ def generate_graph(n, clas):
         while closureFlag:
             closureFlag = False
             current_rels = rels.copy()
-            
+            #TODO: DFS
             for (p1, q1), (p2, q2) in itertools.permutations(current_rels, 2):
                 # count += 1
                 # if count % 10000 == 0:
                 #     print(count)
                 if (p1, q2) not in rels and q1 == p2:
-                    rels.add((p1, q2))
+                    rels[p1].add(q2)
                     closureFlag, flag = True, True
         print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
-
-def graph_from_nodes_rels(nodes,rels):
-    Graph = nx.DiGraph()
-    for node in nodes:
-        Graph.add_node(str(node))
-    for (qs1, qs2) in rels:
-        Graph.add_edge(str(qs1), str(qs2))
-    return Graph
         
 
 if __name__ == "__main__":
     nodes, rels = generate_graph(3, "sigma")
     nodes = [node.base_list for node in nodes]
-    rels = [(p.base_list, q.base_list) for p,q in rels]
+    rels = []
+    for p,qs in rels.items():
+        for q in qs:
+            rels.append(p.base_list, q.base_list)
     with open("output.json", "w") as f:
         json.dump((nodes, rels), f)
     
