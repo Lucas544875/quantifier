@@ -16,6 +16,14 @@ class Quantifier:
             return qs_to_str(self.base_list) == qs_to_str(other.base_list)
         else:
             return False
+    def replace_E8(self):
+        return Quantifier(replace_E8(self.base_list))
+    def replace_A8(self):
+        return Quantifier(replace_A8(self.base_list))
+    def level(self):
+        return level(self.base_list)
+    def unify(self):
+        return Quantifier(unify(self.base_list))
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
@@ -113,13 +121,14 @@ def is_reducible_redundant(qs1, qs2):
         except:
             return False
 
-def is_reducible(qs1, qs2, rels):
+def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
     # qs1 <=m qs2
-    return is_reducible_E8(qs1, qs2) \
-        or is_reducible_A8(qs1, qs2) \
-        or is_reducible_EEAA(qs1, qs2) \
-        or is_reducible_redundant(qs1, qs2)\
-        or is_reducible_extend(qs1, qs2, rels)
+    qs1l, qs2l = qs1.base_list, qs2.base_list
+    return is_reducible_E8(qs1l, qs2l) \
+        or is_reducible_A8(qs1l, qs2l) \
+        or is_reducible_EEAA(qs1l, qs2l) \
+        or is_reducible_redundant(qs1l, qs2l)\
+        or is_reducible_extend(qs1l, qs2l, rels)
 
 # def qs_to_id(qs):
 #     id = 0
@@ -149,13 +158,12 @@ def generate_graph(n, clas):
     while flag:
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            qs1l, qs2l = qs1.base_list, qs2.base_list
             count += 1
             if count % 10000 == 0:
                 print(count)
             if (qs1, qs2) in rels :
                 pass
-            elif is_reducible(qs1l, qs2l, rels):
+            elif is_reducible(qs1, qs2, rels):
                 rels.add((qs1, qs2))
                 flag = True
         closureFlag = True
