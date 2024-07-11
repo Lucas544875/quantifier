@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     for (ps1, ps2) in rels:
         if quantifier_filter(ps1,"Σ2") and quantifier_filter(ps2,"Σ2"):
-            Graph.add_edge(qs_to_str(unify(ps1)), qs_to_str(unify(ps2)))
+            Graph.add_edge(qs_to_str(unify(ps2)), qs_to_str(unify(ps1)))
 
     # rels = [(qs_to_str(unify(q)), qs_to_str(unify(p))) for (p,q) in rels]
     # rels = list(set(rels))
