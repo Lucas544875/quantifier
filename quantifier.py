@@ -4,9 +4,25 @@ import itertools
 import json
 # import pydot
 
+def quantifier_to_latex(q):
+    match q:
+        case 'E':
+            return r"$E$"
+        case 'A':
+            return r"$A$"
+        case 'E8':
+            return r"$E^{\infty}$"
+        case 'A8':
+            return r"$E^{\infty}$"
+
 class Quantifier:
     def __init__(self, base_list):
         self.base_list = base_list
+    def __str__(self) -> str:
+        if self.base_list == []:
+            return "C"
+        else:
+            return "".join(map(quantifier_to_latex,self.base_list))
     def __repr__(self) -> str:
         return qs_to_str(self.base_list)
     def __hash__(self) -> int:
@@ -34,6 +50,7 @@ class Quantifier:
                 return "P"
     def unify(self):
         return Quantifier(unify(self.base_list))
+    
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
