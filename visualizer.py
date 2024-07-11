@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     sccs = list(nx.strongly_connected_components(Graph))
     cg = nx.condensation(Graph, sccs)
+    cg = nx.transitive_reduction(cg)
     names = {}
     for node in cg.nodes:
         names[node] = ", ".join(sccs[node])
