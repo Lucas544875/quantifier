@@ -156,9 +156,6 @@ def generate_graph(n, clas):
     while flag:
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            count += 1
-            if count % 10000 == 0:
-                print(count)
             if (qs1, qs2) in rels :
                 pass
             elif is_reducible(qs1, qs2, rels):
@@ -189,8 +186,8 @@ def graph_from_nodes_rels(nodes,rels):
 
 if __name__ == "__main__":
     nodes, rels = generate_graph(2, "sigma")
-    nodes = [str(node) for node in nodes]
-    rels = [(str(p), str(q)) for p,q in rels]
+    nodes = [node.base_list for node in nodes]
+    rels = [(p.base_list, q.base_list) for p,q in rels]
     with open("output.json", "w") as f:
         json.dump((nodes, rels), f)
     
