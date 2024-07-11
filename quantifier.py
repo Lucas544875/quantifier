@@ -6,6 +6,7 @@ import json
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
+#TODO: Make quantifier type as a subclass of list, make it hashable, and move to set
 def quantifier_extension_init_sigma(qs, n):
     return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2)]
 def quantifier_extension_init_pi(qs, n):
@@ -57,6 +58,14 @@ def unify(qs):
             mask[i] = True
     return [qs[i] for i in range(len(qs)) if not mask[i]]
 
+def replace_E8(qs):
+    return list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs)))
+def replace_A8(qs):
+    return list(itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs)))
+
+def level(qs):
+    return len(unify(replace_E8(replace_A8(qs))))
+
 def is_reducible_extend(qs1, qs2, rels):
     zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
@@ -74,11 +83,22 @@ def is_reducible_EEAA(qs1, qs2):
 
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
-    j = 0
-    for i in range(len(qs1)):
-        if j < len(qs2) and qs1[i] == qs2[j]:
-            j += 1
-    return j == len(qs2)
+    if qs1 == []:
+        return True
+    if qs2 == []:
+        return False
+    i1, i2 = iter(qs1), iter(qs2)
+    n1, n2 = next(i1), next(i2)
+    while True:
+        if n1 == n2:
+            try:
+                n1 = next(i1)
+            except:
+                return True
+        try:
+            n2 = next(i2)
+        except:
+            return False
 
 def is_reducible(qs1, qs2, rels):
     # qs1 <=m qs2
@@ -110,17 +130,32 @@ def qs_to_str(qs):
 
 def generate_graph(n, clas):
     nodes = generate_quantifier(n, clas)
-    print(nodes)
     rels = []
     flag = True
+    count = 0
     while flag:
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
+            count += 1
+            if count % 10000 == 0:
+                print(count)
             if (qs1, qs2) in rels :
                 pass
             elif is_reducible(qs1, qs2, rels):
                 rels.append((qs1, qs2))
                 flag = True
+        closureFlag = True
+        while closureFlag:
+            closureFlag = False
+            current_rels = rels.copy()
+            for (p1, q1), (p2, q2) in itertools.permutations(current_rels, 2):
+                count += 1
+                if count % 10000 == 0:
+                    print(count)
+                if (p1, q2) not in rels and q1 == p2:
+                    rels.append((p1, q2))
+                    closureFlag, flag = True, True
+                
     return nodes,rels
 
 def graph_from_nodes_rels(nodes,rels):
@@ -133,7 +168,7 @@ def graph_from_nodes_rels(nodes,rels):
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(2, "sigma")
+    nodes, rels = generate_graph(3, "sigma")
     with open("output.json", "w") as f:
         json.dump((nodes, rels), f)
     
