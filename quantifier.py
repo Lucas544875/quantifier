@@ -93,22 +93,21 @@ def is_reducible_extend(qs1, qs2, rels):
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
     return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
 def is_reducible_E8(qs1, qs2):
-    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1)))
-    return new_qs1 == qs2
+    return qs1.replace_E8() == qs2
 def is_reducible_A8(qs1, qs2):
-    new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs1)))
-    return new_qs1 == qs2
+    return qs1.replace_A8() == qs2
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
     return unify(qs1) == unify(qs2)
 
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
-    if qs1 == []:
+    qs1l,  qs2l = qs1.base_list, qs2.base_list
+    if qs1l == []:
         return True
-    if qs2 == []:
+    if qs2l == []:
         return False
-    i1, i2 = iter(qs1), iter(qs2)
+    i1, i2 = iter(qs1l), iter(qs2l)
     n1, n2 = next(i1), next(i2)
     while True:
         if n1 == n2:
@@ -124,10 +123,10 @@ def is_reducible_redundant(qs1, qs2):
 def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
     # qs1 <=m qs2
     qs1l, qs2l = qs1.base_list, qs2.base_list
-    return is_reducible_E8(qs1l, qs2l) \
-        or is_reducible_A8(qs1l, qs2l) \
-        or is_reducible_EEAA(qs1l, qs2l) \
-        or is_reducible_redundant(qs1l, qs2l)\
+    return is_reducible_E8(qs1, qs2) \
+        or is_reducible_A8(qs1, qs2) \
+        or is_reducible_EEAA(qs1, qs2) \
+        or is_reducible_redundant(qs1, qs2)\
         or is_reducible_extend(qs1l, qs2l, rels)
 
 # def qs_to_id(qs):
