@@ -4,6 +4,19 @@ import itertools
 import json
 # import pydot
 
+class Quantifiers:
+    def __init__(self, base_list):
+        self.base_list = base_list
+    def __repr__(self) -> str:
+        return qs_to_str(self.base_list)
+    def __hash__(self) -> int:
+        return hash(qs_to_str(self.base_list))
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return qs_to_str(self.base_list) == qs_to_str(other.base_list)
+        else:
+            return False
+
 # 量化子の列:(E, A, E8, A8)からなる配列
 
 #TODO: Make quantifier type as a subclass of list, make it hashable, and move to set
