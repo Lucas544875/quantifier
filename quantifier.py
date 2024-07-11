@@ -99,7 +99,7 @@ def is_reducible_A8(qs1, qs2):
     return qs1.replace_A8() == qs2
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
-    return unify(qs1) == unify(qs2)
+    return qs1.unify() == qs2.unify()
 
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
@@ -188,7 +188,7 @@ def graph_from_nodes_rels(nodes,rels):
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(3, "sigma")
+    nodes, rels = generate_graph(2, "sigma")
     nodes = [str(node) for node in nodes]
     rels = [(str(p), str(q)) for p,q in rels]
     with open("output.json", "w") as f:
