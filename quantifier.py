@@ -2,6 +2,7 @@ from collections import deque
 import networkx as nx
 import itertools
 import json
+import time
 # import pydot
 
 def quantifier_to_latex(q):
@@ -179,6 +180,9 @@ def generate_graph(n, clas):
     flag = True
     count = 0
     while flag:
+        print(f"Pass #{count}")
+        count += 1
+        start = time.time()
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
             if (qs1, qs2) in rels :
@@ -187,16 +191,20 @@ def generate_graph(n, clas):
                 rels.add((qs1, qs2))
                 flag = True
         closureFlag = True
+        print(f"{time.time() - start:.3f}s to compute relations")
+        start = time.time()
         while closureFlag:
             closureFlag = False
             current_rels = rels.copy()
+            
             for (p1, q1), (p2, q2) in itertools.permutations(current_rels, 2):
-                count += 1
-                if count % 10000 == 0:
-                    print(count)
+                # count += 1
+                # if count % 10000 == 0:
+                #     print(count)
                 if (p1, q2) not in rels and q1 == p2:
                     rels.add((p1, q2))
                     closureFlag, flag = True, True
+        print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
 
