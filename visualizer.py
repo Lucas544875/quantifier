@@ -6,7 +6,7 @@ import json
 from quantifier import unify, qs_to_str, level, replace_A8, replace_E8, Quantifier
 
 if __name__ == "__main__":
-    heirarchy = ("S", '3')
+    heirarchy = ("S", '2')
     with open("output.json", "r") as f:
         nodes, rels = json.load(f)
     nodes = [Quantifier(node) for node in nodes]

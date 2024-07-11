@@ -188,35 +188,44 @@ def generate_graph(n, clas):
             if qs2 in rels[qs1] :
                 pass
             elif is_reducible(qs1, qs2, rels):
+                print(repr(qs1), repr(qs2), qs2 in rels[qs1])
+                print(rels[qs1])
                 rels[qs1].add(qs2)
+                print(rels[qs1])
                 flag = True
         closureFlag = True
         print(f"{time.time() - start:.3f}s to compute relations")
         start = time.time()
-        while closureFlag:
-            closureFlag = False
-            current_rels = rels.copy()
-            #TODO: DFS
-            for (p1, q1), (p2, q2) in itertools.permutations(current_rels, 2):
-                # count += 1
-                # if count % 10000 == 0:
-                #     print(count)
-                if (p1, q2) not in rels and q1 == p2:
-                    rels[p1].add(q2)
-                    closureFlag, flag = True, True
+
+        for p in rels.keys():
+            # print(p)
+            print(p, rels[p])
+            visited = {p}
+            new_rels = []
+            children = rels[p]
+            while len(children) > 0:
+                child = children.pop()
+                if child not in visited and child not in rels[p]:
+                    # flag, closureFlag = False, False
+                    rels[p].add(child)
+                    new_rels.append(child)
+                    visited.add(child)
+                    for node in rels[child]:
+                        children.add(node)
+            print(p, new_rels)
         print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(3, "sigma")
+    nodes, rels = generate_graph(2, "sigma")
     nodes = [node.base_list for node in nodes]
-    rels = []
+    rels_out = []
     for p,qs in rels.items():
         for q in qs:
-            rels.append(p.base_list, q.base_list)
+            rels_out.append(p.base_list, q.base_list)
     with open("output.json", "w") as f:
-        json.dump((nodes, rels), f)
+        json.dump((nodes, rels_out), f)
     
 
