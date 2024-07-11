@@ -20,10 +20,14 @@ class Quantifier:
         return Quantifier(replace_E8(self.base_list))
     def replace_A8(self):
         return Quantifier(replace_A8(self.base_list))
+    def classify(self):
+        return (self.type(),str(self.level()))
     def level(self):
         return level(self.base_list)
     def type(self):
-        match self.replace_A8().replace_E8().base_list[0]:
+        match str(self.replace_A8().replace_E8()):
+            case "C":
+                return "C"
             case "E":
                 return "S"
             case "A":
