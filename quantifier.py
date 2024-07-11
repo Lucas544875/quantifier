@@ -7,13 +7,13 @@ import json
 def quantifier_to_latex(q):
     match q:
         case 'E':
-            return r"$E$"
+            return r"E"
         case 'A':
-            return r"$A$"
+            return r"A"
         case 'E8':
-            return r"$E^{\infty}$"
+            return r"E^{\infty}"
         case 'A8':
-            return r"$E^{\infty}$"
+            return r"A^{\infty}"
 
 class Quantifier:
     def __init__(self, base_list):
@@ -22,7 +22,7 @@ class Quantifier:
         if self.base_list == []:
             return "C"
         else:
-            return "".join(map(quantifier_to_latex,self.base_list))
+            return "$" + "".join(map(quantifier_to_latex,self.base_list)) + "$"
     def __repr__(self) -> str:
         return qs_to_str(self.base_list)
     def __hash__(self) -> int:
@@ -37,11 +37,11 @@ class Quantifier:
     def replace_A8(self):
         return Quantifier(replace_A8(self.base_list))
     def classify(self):
-        return (self.type(),str(self.level()))
+        return (self.type() , str(self.level()))
     def level(self):
         return level(self.base_list)
     def type(self):
-        match str(self.replace_A8().replace_E8()):
+        match repr(self.replace_A8().replace_E8())[0]:
             case "C":
                 return "C"
             case "E":
@@ -210,7 +210,7 @@ def graph_from_nodes_rels(nodes,rels):
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(2, "sigma")
+    nodes, rels = generate_graph(3, "sigma")
     nodes = [node.base_list for node in nodes]
     rels = [(p.base_list, q.base_list) for p,q in rels]
     with open("output.json", "w") as f:
