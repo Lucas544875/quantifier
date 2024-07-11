@@ -4,7 +4,7 @@ import itertools
 import json
 # import pydot
 
-class Quantifiers:
+class Quantifier:
     def __init__(self, base_list):
         self.base_list = base_list
     def __repr__(self) -> str:
@@ -83,7 +83,7 @@ def is_reducible_extend(qs1, qs2, rels):
     zipped = itertools.zip_longest(qs1, qs2, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
-    return (new_qs1, new_qs2) in rels
+    return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
 def is_reducible_E8(qs1, qs2):
     new_qs1 = list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs1)))
     return new_qs1 == qs2
@@ -142,20 +142,21 @@ def qs_to_str(qs):
         return "".join(qs)
 
 def generate_graph(n, clas):
-    nodes = generate_quantifier(n, clas)
-    rels = []
+    nodes = [Quantifier(qs) for qs in generate_quantifier(n, clas)]
+    rels: set[tuple[Quantifier,Quantifier]] = set()
     flag = True
     count = 0
     while flag:
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
+            qs1l, qs2l = qs1.base_list, qs2.base_list
             count += 1
             if count % 10000 == 0:
                 print(count)
             if (qs1, qs2) in rels :
                 pass
-            elif is_reducible(qs1, qs2, rels):
-                rels.append((qs1, qs2))
+            elif is_reducible(qs1l, qs2l, rels):
+                rels.add((qs1, qs2))
                 flag = True
         closureFlag = True
         while closureFlag:
@@ -166,7 +167,7 @@ def generate_graph(n, clas):
                 if count % 10000 == 0:
                     print(count)
                 if (p1, q2) not in rels and q1 == p2:
-                    rels.append((p1, q2))
+                    rels.add((p1, q2))
                     closureFlag, flag = True, True
                 
     return nodes,rels
@@ -174,14 +175,16 @@ def generate_graph(n, clas):
 def graph_from_nodes_rels(nodes,rels):
     Graph = nx.DiGraph()
     for node in nodes:
-        Graph.add_node(qs_to_str(node))
+        Graph.add_node(str(node))
     for (qs1, qs2) in rels:
-        Graph.add_edge(qs_to_str(qs1), qs_to_str(qs2))
+        Graph.add_edge(str(qs1), str(qs2))
     return Graph
         
 
 if __name__ == "__main__":
     nodes, rels = generate_graph(3, "sigma")
+    nodes = [str(node) for node in nodes]
+    rels = [(str(p), str(q)) for p,q in rels]
     with open("output.json", "w") as f:
         json.dump((nodes, rels), f)
     
