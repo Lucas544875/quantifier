@@ -185,46 +185,43 @@ def generate_graph(n, clas):
         start = time.time()
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            if qs2 in rels[qs1] :
-                pass
-            elif is_reducible(qs1, qs2, rels):
-                print(repr(qs1), repr(qs2), qs2 in rels[qs1])
-                print(rels[qs1])
+            if is_reducible(qs1, qs2, rels) and qs2 not in rels[qs1]:
                 rels[qs1].add(qs2)
-                print(rels[qs1])
                 flag = True
-        closureFlag = True
+        
         print(f"{time.time() - start:.3f}s to compute relations")
         start = time.time()
-
+        new_rels = []
         for p in rels.keys():
             # print(p)
-            print(p, rels[p])
+            # print(p, rels[p])
             visited = {p}
-            new_rels = []
-            children = rels[p]
+            children = list(rels[p].copy())
             while len(children) > 0:
                 child = children.pop()
-                if child not in visited and child not in rels[p]:
-                    # flag, closureFlag = False, False
-                    rels[p].add(child)
-                    new_rels.append(child)
+                if child not in visited:
+                    if child not in rels[p]:
+                        flag = True
+                        rels[p].add(child)
+                        new_rels.append((p,child))
                     visited.add(child)
-                    for node in rels[child]:
-                        children.add(node)
-            print(p, new_rels)
+                    # print(rels[child])
+                    for node in rels[child].copy():
+                        # print(node)
+                        children.append(node)
+        print(f"new rels: {new_rels}")
         print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(2, "sigma")
+    nodes, rels = generate_graph(3, "sigma")
     nodes = [node.base_list for node in nodes]
     rels_out = []
     for p,qs in rels.items():
         for q in qs:
-            rels_out.append(p.base_list, q.base_list)
+            rels_out.append((p.base_list, q.base_list))
     with open("output.json", "w") as f:
         json.dump((nodes, rels_out), f)
     
