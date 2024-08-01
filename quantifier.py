@@ -146,9 +146,15 @@ def is_reducible_redundant(qs1, qs2):
             n2 = next(i2)
         except:
             return False
+        
+def is_reducible_known(qs1, qs2):
+    # EAE <=m A8E
+    known_relations = [(Quantifier(["E","A","E"]), Quantifier(["A","8","E"]))]
+    return (qs1, qs2) in known_relations
 
 def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
-    return is_reducible_E8(qs1, qs2) \
+    return is_reducible_known(qs1, qs2) \
+        or is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
         or is_reducible_redundant(qs1, qs2)\
