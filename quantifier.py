@@ -185,7 +185,9 @@ def generate_graph(n, clas):
         start = time.time()
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            if is_reducible(qs1, qs2, rels) and qs2 not in rels[qs1]:
+            if qs2 in rels[qs1]:
+                pass
+            elif is_reducible(qs1, qs2, rels):
                 rels[qs1].add(qs2)
                 flag = True
         
@@ -216,7 +218,7 @@ def generate_graph(n, clas):
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(2, "sigma")
+    nodes, rels = generate_graph(3, "sigma")
     nodes = [node.base_list for node in nodes]
     rels_out = []
     for p,qs in rels.items():
