@@ -2,11 +2,28 @@ from collections import deque
 import networkx as nx
 import itertools
 import json
+import time
 # import pydot
+
+def quantifier_to_latex(q):
+    match q:
+        case 'E':
+            return r"E"
+        case 'A':
+            return r"A"
+        case 'E8':
+            return r"E^{\infty}"
+        case 'A8':
+            return r"A^{\infty}"
 
 class Quantifier:
     def __init__(self, base_list):
         self.base_list = base_list
+    def __str__(self) -> str:
+        if self.base_list == []:
+            return "C"
+        else:
+            return "$" + "".join(map(quantifier_to_latex,self.base_list)) + "$"
     def __repr__(self) -> str:
         return qs_to_str(self.base_list)
     def __hash__(self) -> int:
@@ -20,10 +37,21 @@ class Quantifier:
         return Quantifier(replace_E8(self.base_list))
     def replace_A8(self):
         return Quantifier(replace_A8(self.base_list))
+    def classify(self):
+        return (self.type() , str(self.level()))
     def level(self):
         return level(self.base_list)
+    def type(self):
+        match repr(self.replace_A8().replace_E8())[0]:
+            case "C":
+                return "C"
+            case "E":
+                return "S"
+            case "A":
+                return "P"
     def unify(self):
         return Quantifier(unify(self.base_list))
+    
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
@@ -33,7 +61,7 @@ def quantifier_extension_init_sigma(qs, n):
 def quantifier_extension_init_pi(qs, n):
     return [(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 def quantifier_extension_init(qs,n):
-    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["A8"], 2),(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
+    return [(qs+["E"], 1), (qs+["E","E"], 1), (qs+["E8"], 2),(qs+["A"], 1), (qs+["A","A"], 1), (qs+["A8"], 2)]
 def quantifier_extension_E(qs, n):
     return [(qs+["A"], n+1), (qs+["A","A"], n+1), (qs+["A8"], n+1), (qs+["E8"], n+2)]
 def quantifier_extension_A(qs, n):
@@ -90,7 +118,7 @@ def is_reducible_extend(qs1, qs2, rels):
     zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
-    return (Quantifier(new_qs1), Quantifier(new_qs2)) in rels
+    return Quantifier(new_qs2) in rels[Quantifier(new_qs1)]
 def is_reducible_E8(qs1, qs2):
     return qs1.replace_E8() == qs2
 def is_reducible_A8(qs1, qs2):
@@ -148,45 +176,55 @@ def qs_to_str(qs):
 
 def generate_graph(n, clas):
     nodes = [Quantifier(qs) for qs in generate_quantifier(n, clas)]
-    rels: set[tuple[Quantifier,Quantifier]] = set()
+    rels: dict[Quantifier, set[Quantifier]] = {node : set() for node in nodes}
     flag = True
     count = 0
     while flag:
+        print(f"Pass #{count}")
+        count += 1
+        start = time.time()
         flag = False
         for (qs1, qs2) in itertools.permutations(nodes, 2):
-            if (qs1, qs2) in rels :
+            if qs2 in rels[qs1]:
                 pass
             elif is_reducible(qs1, qs2, rels):
-                rels.add((qs1, qs2))
+                rels[qs1].add(qs2)
                 flag = True
-        closureFlag = True
-        while closureFlag:
-            closureFlag = False
-            current_rels = rels.copy()
-            for (p1, q1), (p2, q2) in itertools.permutations(current_rels, 2):
-                count += 1
-                if count % 10000 == 0:
-                    print(count)
-                if (p1, q2) not in rels and q1 == p2:
-                    rels.add((p1, q2))
-                    closureFlag, flag = True, True
+        
+        print(f"{time.time() - start:.3f}s to compute relations")
+        start = time.time()
+        new_rels = []
+        for p in rels.keys():
+            # print(p)
+            # print(p, rels[p])
+            visited = {p}
+            children = set(rels[p].copy())
+            while len(children) > 0:
+                child = children.pop()
+                if child not in visited:
+                    if child not in rels[p]:
+                        flag = True
+                        rels[p].add(child)
+                        new_rels.append((p,child))
+                    visited.add(child)
+                    # print(rels[child])
+                    for node in rels[child].copy():
+                        # print(node)
+                        children.add(node)
+        print(f"new rels: {new_rels}")
+        print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
-
-def graph_from_nodes_rels(nodes,rels):
-    Graph = nx.DiGraph()
-    for node in nodes:
-        Graph.add_node(str(node))
-    for (qs1, qs2) in rels:
-        Graph.add_edge(str(qs1), str(qs2))
-    return Graph
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(2, "sigma")
+    nodes, rels = generate_graph(3, "sigma")
     nodes = [node.base_list for node in nodes]
-    rels = [(p.base_list, q.base_list) for p,q in rels]
+    rels_out = []
+    for p,qs in rels.items():
+        for q in qs:
+            rels_out.append((p.base_list, q.base_list))
     with open("output.json", "w") as f:
-        json.dump((nodes, rels), f)
+        json.dump((nodes, rels_out), f)
     
 

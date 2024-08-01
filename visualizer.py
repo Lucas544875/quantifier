@@ -1,34 +1,24 @@
 from collections import deque
 import networkx as nx
 import itertools
+import matplotlib.pyplot as plt
 import json
-from quantifier import unify, qs_to_str, level, replace_A8, replace_E8
-
-def classify(qs):
-    clas = ""
-    if qs == []:
-        clas = "C"
-    elif qs[0] == "E" or qs[0] == "A8":
-        clas = "Σ"
-    elif qs[0] == "A" or qs[0] == "E8":
-        clas = "Π"
-    return clas+str(level(qs))
-
-def quantifier_filter(qs,clas):
-    return classify(qs) == clas
+from quantifier import unify, qs_to_str, level, replace_A8, replace_E8, Quantifier
 
 if __name__ == "__main__":
+    heirarchy = ("S", '3')
     with open("output.json", "r") as f:
         nodes, rels = json.load(f)
-
+    nodes = [Quantifier(node) for node in nodes]
+    rels = [(Quantifier(q), Quantifier(p)) for p,q in rels]
     Graph = nx.DiGraph()
     for n in nodes:
-        if quantifier_filter(n,"Σ2"):
-            Graph.add_node(qs_to_str(unify(n)))
+        if n.classify() == heirarchy:
+            Graph.add_node(str(n.unify()))
 
     for (ps1, ps2) in rels:
-        if quantifier_filter(ps1,"Σ2") and quantifier_filter(ps2,"Σ2"):
-            Graph.add_edge(qs_to_str(unify(ps2)), qs_to_str(unify(ps1)))
+        if ps1.classify() == heirarchy and ps2.classify() == heirarchy:
+            Graph.add_edge(str(ps1.unify()), str(ps2.unify()))
 
     # rels = [(qs_to_str(unify(q)), qs_to_str(unify(p))) for (p,q) in rels]
     # rels = list(set(rels))
@@ -39,9 +29,11 @@ if __name__ == "__main__":
     sccs = list(nx.strongly_connected_components(Graph))
     cg = nx.condensation(Graph, sccs)
     cg = nx.transitive_reduction(cg)
-    names = {}
-    for node in cg.nodes:
-        names[node] = ", ".join(sccs[node])
-    cg = nx.relabel_nodes(cg, names)
-    g = nx.nx_agraph.to_agraph(cg)
-    g.draw('sigma3-c.png',prog='dot')
+    names = {node : ", ".join(sccs[node]) for node in cg.nodes}
+    nx.draw_networkx(cg, pos=nx.nx_agraph.pygraphviz_layout(cg, prog='dot'), with_labels=True, labels=names,node_size=2000)
+    plt.savefig("sigma3-c.png")
+    plt.show()
+    # cg = nx.relabel_nodes(cg, names)
+    # g = nx.nx_agraph.to_agraph(cg)
+    
+    # g.draw('sigma3-c.png',prog='dot')
