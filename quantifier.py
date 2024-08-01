@@ -3,6 +3,7 @@ import networkx as nx
 import itertools
 import json
 import time
+import sys
 # import pydot
 
 def quantifier_to_latex(q):
@@ -85,7 +86,7 @@ def quantifier_extension(qs, n):
     elif qs[-1] == "A8":
         return quantifier_extension_A8(qs, n)
     
-def generate_quantifier(n, clas):
+def generate_quantifier(n):
     quantifiers = []
     q = deque()
     q.append(([], 0)) #computable ralationから始める
@@ -113,11 +114,13 @@ def replace_A8(qs):
 def level(qs):
     return len(unify(replace_E8(replace_A8(qs))))
 
-def is_reducible_extend(qs1, qs2, rels):
+def is_reducible_extend(qs1, qs2, rels,debug=False):
     qs1l, qs2l = qs1.base_list, qs2.base_list
     zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
+    if debug:
+        print(new_qs1, new_qs2)
     return Quantifier(new_qs2) in rels[Quantifier(new_qs1)]
 def is_reducible_E8(qs1, qs2):
     return qs1.replace_E8() == qs2
@@ -149,16 +152,40 @@ def is_reducible_redundant(qs1, qs2):
         
 def is_reducible_known(qs1, qs2):
     # EAE <=m A8E
-    known_relations = [(Quantifier(["E","A","E"]), Quantifier(["A","8","E"]))]
+    known_relations = [(Quantifier(["E"]), Quantifier(["E","8"])),
+                       (Quantifier(["A"]), Quantifier(["A","8"])),
+                       (Quantifier(["A"]), Quantifier(["E","8"])),
+                       (Quantifier(["E"]), Quantifier(["A","8"])),
+                       (Quantifier(["A","E"]), Quantifier(["E","8"])), #Result from PI_2 classification
+                       (Quantifier(["E", "A", "E"]), Quantifier(["E","A", "8", "E"])), #Proposition 53
+                       (Quantifier(["E","8","A","8"]), Quantifier(["E","8","A"])), # Proposition 55
+                       (Quantifier(["A","A","8","A"]), Quantifier(["E","8","A","8","A"])), #Proposition 56
+                       (Quantifier(["A","A","8"]), Quantifier(["E","8","A","8"])), #Proposition 57
+                       (Quantifier(["A","E","A"]), Quantifier(["A","E","8","A"])),# Diagram 3
+                       (Quantifier(["A","E","A"]), Quantifier(["E","8","E","A","8"])),# Diagram 3
+                       ]
     return (qs1, qs2) in known_relations
 
+def is_reducible_lift(qs1: Quantifier, qs2: Quantifier, debug=False):
+    if(len(qs1.base_list) < 1 or len(qs2.base_list) < 2):
+        return False
+    if qs1.base_list[0] == "A":
+        if qs2.base_list[0:2] == ["E", "8"] or qs2.base_list[0:2] == ["A", "8"]:
+            return qs1.base_list[1:] == qs2.base_list[2:]
+    if qs2.base_list[0] == "E":
+        if qs2.base_list[0:2] == ["E", "8"]:
+            return qs1.base_list[1:] == qs2.base_list[2:]
+    return False
+
 def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
-    return is_reducible_known(qs1, qs2) \
+    return qs2 in rels[qs1] \
+        or is_reducible_known(qs1, qs2) \
         or is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
         or is_reducible_redundant(qs1, qs2)\
-        or is_reducible_extend(qs1, qs2, rels)
+        or is_reducible_extend(qs1, qs2, rels)\
+        or is_reducible_lift(qs1, qs2)
 
 # def qs_to_id(qs):
 #     id = 0
@@ -180,11 +207,11 @@ def qs_to_str(qs):
     else:
         return "".join(qs)
 
-def generate_graph(n, clas):
-    nodes = [Quantifier(qs) for qs in generate_quantifier(n, clas)]
+def generate_graph(n):
+    nodes = [Quantifier(qs) for qs in generate_quantifier(n)]
     rels: dict[Quantifier, set[Quantifier]] = {node : set() for node in nodes}
     flag = True
-    count = 0
+    count = 1
     while flag:
         print(f"Pass #{count}")
         count += 1
@@ -195,6 +222,8 @@ def generate_graph(n, clas):
                 pass
             elif is_reducible(qs1, qs2, rels):
                 rels[qs1].add(qs2)
+                if not flag:
+                    print("New relation from rules")
                 flag = True
         
         print(f"{time.time() - start:.3f}s to compute relations")
@@ -209,22 +238,26 @@ def generate_graph(n, clas):
                 child = children.pop()
                 if child not in visited:
                     if child not in rels[p]:
+                        if not flag:
+                            print("New relation from closure")
                         flag = True
                         rels[p].add(child)
-                        new_rels.append((p,child))
+                        # new_rels.append((p,child))
                     visited.add(child)
                     # print(rels[child])
                     for node in rels[child].copy():
                         # print(node)
                         children.add(node)
-        print(f"new rels: {new_rels}")
+        # print(f"new rels: {new_rels}")
         print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
     return nodes,rels
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(3, "sigma")
+    n = int(sys.argv[1])
+    nodes, rels = generate_graph(n)
+    print(is_reducible_lift(Quantifier(["E","A","8","A"]),Quantifier(["E", "8", "A","8", "A"]), True))
     nodes = [node.base_list for node in nodes]
     rels_out = []
     for p,qs in rels.items():
