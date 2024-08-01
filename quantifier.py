@@ -196,7 +196,7 @@ def generate_graph(n, clas):
             # print(p)
             # print(p, rels[p])
             visited = {p}
-            children = list(rels[p].copy())
+            children = set(rels[p].copy())
             while len(children) > 0:
                 child = children.pop()
                 if child not in visited:
@@ -208,7 +208,7 @@ def generate_graph(n, clas):
                     # print(rels[child])
                     for node in rels[child].copy():
                         # print(node)
-                        children.append(node)
+                        children.add(node)
         print(f"new rels: {new_rels}")
         print(f"{time.time() - start:.3f}s to compute transitive closure")
                 
@@ -216,7 +216,7 @@ def generate_graph(n, clas):
         
 
 if __name__ == "__main__":
-    nodes, rels = generate_graph(3, "sigma")
+    nodes, rels = generate_graph(2, "sigma")
     nodes = [node.base_list for node in nodes]
     rels_out = []
     for p,qs in rels.items():

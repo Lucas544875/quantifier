@@ -6,7 +6,7 @@ import json
 from quantifier import unify, qs_to_str, level, replace_A8, replace_E8, Quantifier
 
 if __name__ == "__main__":
-    heirarchy = ("S", '3')
+    heirarchy = ("S", '2')
     with open("output.json", "r") as f:
         nodes, rels = json.load(f)
     nodes = [Quantifier(node) for node in nodes]
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     cg = nx.condensation(Graph, sccs)
     cg = nx.transitive_reduction(cg)
     names = {node : ", ".join(sccs[node]) for node in cg.nodes}
-    nx.draw_networkx(cg, pos=nx.nx_agraph.pygraphviz_layout(cg, prog='dot'), with_labels=True, labels=names,node_size=800)
+    nx.draw_networkx(cg, pos=nx.nx_agraph.pygraphviz_layout(cg, prog='dot'), with_labels=True, labels=names,node_size=2000)
     plt.show()
     # cg = nx.relabel_nodes(cg, names)
     # g = nx.nx_agraph.to_agraph(cg)
