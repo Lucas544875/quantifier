@@ -52,6 +52,20 @@ class Quantifier:
                 return "P"
     def unify(self):
         return Quantifier(unify(self.base_list))
+    def from_str(string: str):
+        base_list = []
+        for i in range(len(string)):
+            match string[i]:
+                case "E":
+                    base_list.append("E")
+                case "A":
+                    base_list.append("A")
+                case "8":
+                    base_list[-1] += "8"
+                case _:
+                    raise ValueError("Invalid quantifier string " + string)
+        return Quantifier(base_list)
+        
     
 
 # 量化子の列:(E, A, E8, A8)からなる配列
@@ -152,34 +166,34 @@ def is_reducible_redundant(qs1, qs2):
         
 def is_reducible_known(qs1, qs2):
     # EAE <=m A8E
-    known_relations = [(Quantifier(["E"]), Quantifier(["E","8"])),
-                       (Quantifier(["A"]), Quantifier(["A","8"])),
-                       (Quantifier(["A"]), Quantifier(["E","8"])),
-                       (Quantifier(["E"]), Quantifier(["A","8"])),
-                       (Quantifier(["A","E"]), Quantifier(["E","8"])), #Result from PI_2 classification
-                       (Quantifier(["E", "A", "E"]), Quantifier(["E","A", "8", "E"])), #Proposition 53
-                       (Quantifier(["E","8","A","8"]), Quantifier(["E","8","A"])), # Proposition 55
-                       (Quantifier(["A","A","8","A"]), Quantifier(["E","8","A","8","A"])), #Proposition 56
-                       (Quantifier(["A","A","8"]), Quantifier(["E","8","A","8"])), #Proposition 57
-                       (Quantifier(["A","E","A"]), Quantifier(["A","E","8","A"])),# Diagram 3
-                       (Quantifier(["A","E","A"]), Quantifier(["E","8","E","A","8"])),# Diagram 3
+    known_relations = [(Quantifier(["E"]), Quantifier(["E8"])),
+                       (Quantifier(["A"]), Quantifier(["A8"])),
+                       (Quantifier(["A"]), Quantifier(["E8"])),
+                       (Quantifier(["E"]), Quantifier(["A8"])),
+                       (Quantifier(["A","E"]), Quantifier(["E8"])), #Result from PI_2 classification
+                       (Quantifier(["E", "A", "E"]), Quantifier(["E","A8", "E"])), #Proposition 53
+                       (Quantifier(["E8","A8"]), Quantifier(["E8","A"])), # Proposition 55
+                       (Quantifier(["A","A8","A"]), Quantifier(["E8","A8","A"])), #Proposition 56
+                       (Quantifier(["A","A8"]), Quantifier(["E8","A8"])), #Proposition 57
+                    #    (Quantifier(["A","E","A"]), Quantifier(["A","E8","A"])),# Diagram 3
+                       (Quantifier(["A","E","A"]), Quantifier(["E8","E","A8"])),# Diagram 3
                        ]
     return (qs1, qs2) in known_relations
 
 def is_reducible_lift(qs1: Quantifier, qs2: Quantifier, debug=False):
-    if(len(qs1.base_list) < 1 or len(qs2.base_list) < 2):
+    if debug: print(qs1.base_list, qs2.base_list)
+    if(len(qs1.base_list) < 1 or len(qs2.base_list) < 1):
         return False
     if qs1.base_list[0] == "A":
-        if qs2.base_list[0:2] == ["E", "8"] or qs2.base_list[0:2] == ["A", "8"]:
-            return qs1.base_list[1:] == qs2.base_list[2:]
-    if qs2.base_list[0] == "E":
-        if qs2.base_list[0:2] == ["E", "8"]:
-            return qs1.base_list[1:] == qs2.base_list[2:]
+        if qs2.base_list[0] == "E8" or qs2.base_list[0] == "A8":
+            return qs1.base_list[1:] == qs2.base_list[1:]
+    if qs1.base_list[0] == "E":
+        if qs2.base_list[0] == "E8":
+            return qs1.base_list[1:] == qs2.base_list[1:]
     return False
 
 def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quantifier]]):
-    return qs2 in rels[qs1] \
-        or is_reducible_known(qs1, qs2) \
+    return is_reducible_known(qs1, qs2) \
         or is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
@@ -208,6 +222,8 @@ def qs_to_str(qs):
         return "".join(qs)
 
 def generate_graph(n):
+    q = Quantifier.from_str("EAEE8A8AE")
+    print(repr(q), q.base_list)
     nodes = [Quantifier(qs) for qs in generate_quantifier(n)]
     rels: dict[Quantifier, set[Quantifier]] = {node : set() for node in nodes}
     flag = True
@@ -257,7 +273,21 @@ def generate_graph(n):
 if __name__ == "__main__":
     n = int(sys.argv[1])
     nodes, rels = generate_graph(n)
-    print(is_reducible_lift(Quantifier(["E","A","8","A"]),Quantifier(["E", "8", "A","8", "A"]), True))
+    print([node.base_list for node in nodes[10:30]])
+    ae8a = Quantifier.from_str("AE8A")
+    aea = Quantifier.from_str("AEA")
+    e8a = Quantifier.from_str("E8A")
+    ea = Quantifier.from_str("EA")
+    print(is_reducible(aea, ae8a, rels))
+    print(is_reducible(ea, e8a,rels))
+    print(is_reducible_lift(ea, e8a))
+    for (qs1, qs2) in itertools.permutations(nodes, 2):
+        if (qs1 == aea and qs2 == ae8a):
+            print(aea.base_list,  ae8a.base_list)
+            print(qs1.base_list, qs2.base_list, is_reducible(qs1, qs2, rels), is_reducible(aea, ae8a, rels), qs2 in rels[qs1])
+        if is_reducible(qs1, qs2, rels):
+            rels[qs1].add(qs2)
+
     nodes = [node.base_list for node in nodes]
     rels_out = []
     for p,qs in rels.items():
