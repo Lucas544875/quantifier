@@ -228,6 +228,50 @@ def qs_to_str(qs):
         return "C"
     else:
         return "".join(qs)
+    
+def add_relations(nodes, rels):
+    start = time.time()
+    flag = False
+    for (qs1, qs2) in itertools.permutations(nodes, 2):
+        if qs2 in rels[qs1]:
+            pass
+        elif is_reducible(qs1, qs2, rels):
+            rels[qs1].add(qs2)
+            if not flag:
+                print("New relation from rules")
+            flag = True
+        
+    print(f"{time.time() - start:.3f}s to compute relations")
+    return flag
+    
+    
+def dfs_closure(nodes, rels):
+    flag = False
+    start = time.time()
+    new_rels = []
+    for p in nodes:
+        # print(p)
+        # print(p, rels[p])
+        visited = {p}
+        children = set(rels[p].copy())
+        while len(children) > 0:
+            child = children.pop()
+            if child not in visited:
+                if child not in rels[p]:
+                    if not flag:
+                        print("New relation from closure")
+                    flag = True
+                    rels[p].add(child)
+                    # new_rels.append((p,child))
+                visited.add(child)
+                # print(rels[child])
+                for node in rels[child].copy():
+                    # print(node)
+                    children.add(node)
+    # print(f"new rels: {new_rels}")
+    print(f"{time.time() - start:.3f}s to compute transitive closure")
+    return flag
+                
 
 def generate_graph(n):
     nodes = [Quantifier(qs) for qs in generate_quantifier(n)]
@@ -236,43 +280,13 @@ def generate_graph(n):
     flag = True
     count = 1
     while flag:
+        flag = False
         print(f"Pass #{count}")
         count += 1
-        start = time.time()
-        flag = False
-        for (qs1, qs2) in itertools.permutations(nodes, 2):
-            if qs2 in rels[qs1]:
-                pass
-            elif is_reducible(qs1, qs2, rels):
-                rels[qs1].add(qs2)
-                if not flag:
-                    print("New relation from rules")
-                flag = True
-        
-        print(f"{time.time() - start:.3f}s to compute relations")
-        start = time.time()
-        new_rels = []
-        for p in rels.keys():
-            # print(p)
-            # print(p, rels[p])
-            visited = {p}
-            children = set(rels[p].copy())
-            while len(children) > 0:
-                child = children.pop()
-                if child not in visited:
-                    if child not in rels[p]:
-                        if not flag:
-                            print("New relation from closure")
-                        flag = True
-                        rels[p].add(child)
-                        # new_rels.append((p,child))
-                    visited.add(child)
-                    # print(rels[child])
-                    for node in rels[child].copy():
-                        # print(node)
-                        children.add(node)
-        # print(f"new rels: {new_rels}")
-        print(f"{time.time() - start:.3f}s to compute transitive closure")
+        rel_added = add_relations(nodes,rels)
+        flag = flag or rel_added
+        closed = dfs_closure(nodes,rels)
+        flag = flag or closed
                 
     return nodes,rels
         
