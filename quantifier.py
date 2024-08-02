@@ -4,6 +4,7 @@ import itertools
 import json
 import time
 import sys
+import functools
 # import pydot
 
 
@@ -31,7 +32,7 @@ class Quantifier:
         else:
             return "$" + "".join(map(quantifier_to_latex,self.base_list)) + "$"
     def __repr__(self) -> str:
-        return qs_to_str(self.string_rep)
+        return self.string_rep
     def __hash__(self) -> int:
         return self.hash
     def __eq__(self, other):
@@ -119,6 +120,7 @@ def generate_quantifier(n):
             q.extend(quantifier_extension(qs, m)) # 後ろにくっつけて延長した量化子列を生成
     return quantifiers
 
+
 def unify(qs):
     mask = [False]*len(qs)
     for i in range(len(qs)-1):
@@ -128,35 +130,44 @@ def unify(qs):
             mask[i] = True
     return [qs[i] for i in range(len(qs)) if not mask[i]]
 
+
 def replace_E8(qs):
     return list(itertools.chain.from_iterable(map(lambda x : ["A", "E"] if x == "E8" else [x], qs)))
+
 def replace_A8(qs):
     return list(itertools.chain.from_iterable(map(lambda x : ["E", "A"] if x == "A8" else [x], qs)))
 
 def level(qs):
     return len(unify(replace_E8(replace_A8(qs))))
 
-def is_reducible_extend(qs1, qs2, rels,debug=False):
+# @functools.cache
+def remove_common_prefix(qs1, qs2):
     qs1l, qs2l = qs1.base_list, qs2.base_list
     shortest = min(len(qs1l), len(qs2l))
     index = 0
     zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
-    if debug:
-        print(new_qs1, new_qs2)
-    return Quantifier(new_qs2) in rels[Quantifier(new_qs1)]
+    return Quantifier(new_qs2) ,Quantifier(new_qs1)
+
+def is_reducible_extend(qs1, qs2, rels,debug=False):
+    new_qs1, new_qs2 = remove_common_prefix(qs1, qs2)
+    return new_qs2 in rels[new_qs1]
+
+# @functools.cache
 def is_reducible_E8(qs1, qs2):
     # return qs1.replace_E8() == qs2
     return replace_E8(qs1.base_list) == qs2.base_list
+# @functools.cache
 def is_reducible_A8(qs1, qs2):
     # return qs1.replace_A8() == qs2
     return replace_A8(qs1.base_list) == qs2.base_list
+# @functools.cache
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
     return qs1.unify() == qs2.unify()
     # return unify(qs1.base_list) == unify(qs2.base_list)
-
+# @functools.cache
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
     qs1l,  qs2l = qs1.base_list, qs2.base_list
@@ -176,12 +187,12 @@ def is_reducible_redundant(qs1, qs2):
             n2 = next(i2)
         except:
             return False
-        
+# @functools.cache     
 def is_reducible_known(qs1, qs2):
     # EAE <=m A8E
     
     return (qs1, qs2) in known_relations
-
+# @functools.cache
 def is_reducible_lift(qs1: Quantifier, qs2: Quantifier, debug=False):
     if debug: print(qs1.base_list, qs2.base_list)
     if(len(qs1.base_list) < 1 or len(qs2.base_list) < 1):
@@ -224,7 +235,7 @@ def qs_to_str(qs):
     else:
         return "".join(qs)
     
-def add_relations(nodes, rels):
+def add_relations(nodes, rels: dict[Quantifier, set[Quantifier]] ):
     start = time.time()
     flag = False
     for (qs1, qs2) in itertools.permutations(nodes, 2):
@@ -239,8 +250,25 @@ def add_relations(nodes, rels):
     print(f"{time.time() - start:.3f}s to compute relations")
     return flag
     
+def closure_node(p, rels):
+    visited = {p}
+    children = set(rels[p].copy())
+    while len(children) > 0:
+        child = children.pop()
+        if child not in visited:
+            if child not in rels[p]:
+                if not flag:
+                    print("New relation from closure")
+                flag = True
+                rels[p].add(child)
+                # new_rels.append((p,child))
+            visited.add(child)
+            # print(rels[child])
+            for node in rels[child].copy():
+                # print(node)
+                children.add(node)
     
-def dfs_closure(nodes, rels):
+def dfs_closure(nodes, rels: dict[Quantifier, set[Quantifier]] ):
     flag = False
     start = time.time()
     new_rels = []
@@ -271,6 +299,7 @@ def dfs_closure(nodes, rels):
 def generate_graph(n):
     nodes = [Quantifier(qs) for qs in generate_quantifier(n)]
     print(len(nodes))
+    print(repr(nodes[10]))
     rels: dict[Quantifier, set[Quantifier]] = {node : set() for node in nodes}
     flag = True
     count = 1
