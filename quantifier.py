@@ -250,23 +250,23 @@ def add_relations(nodes, rels: dict[Quantifier, set[Quantifier]] ):
     print(f"{time.time() - start:.3f}s to compute relations")
     return flag
     
-def closure_node(p, rels):
-    visited = {p}
-    children = set(rels[p].copy())
-    while len(children) > 0:
-        child = children.pop()
-        if child not in visited:
-            if child not in rels[p]:
-                if not flag:
-                    print("New relation from closure")
-                flag = True
-                rels[p].add(child)
-                # new_rels.append((p,child))
-            visited.add(child)
-            # print(rels[child])
-            for node in rels[child].copy():
-                # print(node)
-                children.add(node)
+# def closure_node(p, rels):
+#     visited = {p}
+#     children = set(rels[p].copy())
+#     while len(children) > 0:
+#         child = children.pop()
+#         if child not in visited:
+#             if child not in rels[p]:
+#                 if not flag:
+#                     print("New relation from closure")
+#                 flag = True
+#                 rels[p].add(child)
+#                 # new_rels.append((p,child))
+#             visited.add(child)
+#             # print(rels[child])
+#             for node in rels[child].copy():
+#                 # print(node)
+#                 children.add(node)
     
 def dfs_closure(nodes, rels: dict[Quantifier, set[Quantifier]] ):
     flag = False
