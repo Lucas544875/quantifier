@@ -6,6 +6,8 @@ import time
 import sys
 # import pydot
 
+
+
 def quantifier_to_latex(q):
     match q:
         case 'E':
@@ -56,7 +58,7 @@ class Quantifier:
     def unify(self):
         if self.unified is None:
             self.unified = unify(self.base_list)
-        return Quantifier(self.unified)
+        return self.unified
     def from_str(string: str):
         base_list = []
         for i in range(len(string)):
@@ -72,6 +74,7 @@ class Quantifier:
         return Quantifier(base_list)
         
     
+
 
 # 量化子の列:(E, A, E8, A8)からなる配列
 
@@ -135,6 +138,8 @@ def level(qs):
 
 def is_reducible_extend(qs1, qs2, rels,debug=False):
     qs1l, qs2l = qs1.base_list, qs2.base_list
+    shortest = min(len(qs1l), len(qs2l))
+    index = 0
     zipped = itertools.zip_longest(qs1l, qs2l, fillvalue=None)
     no_common_prefix = list(itertools.dropwhile(lambda x : x[0] == x[1], zipped))
     new_qs1, new_qs2 = [x[0] for x in no_common_prefix if x[0] is not None], [x[1] for x in no_common_prefix if x[1] is not None]
@@ -150,6 +155,7 @@ def is_reducible_A8(qs1, qs2):
 def is_reducible_EEAA(qs1, qs2):
     # 重複するAやEを削除したものが同じなら還元可能
     return qs1.unify() == qs2.unify()
+    # return unify(qs1.base_list) == unify(qs2.base_list)
 
 def is_reducible_redundant(qs1, qs2):
     #量化子列は冗長な量化子をつけたものに還元可能
@@ -173,19 +179,7 @@ def is_reducible_redundant(qs1, qs2):
         
 def is_reducible_known(qs1, qs2):
     # EAE <=m A8E
-    known_relations = [
-                        # (Quantifier(["E"]), Quantifier(["E8"])),
-                    #    (Quantifier(["A"]), Quantifier(["A8"])),
-                    #    (Quantifier(["A"]), Quantifier(["E8"])),
-                    #    (Quantifier(["E"]), Quantifier(["A8"])),
-                       (Quantifier(["A","E"]), Quantifier(["E8"])), #Result from PI_2 classification
-                    #    (Quantifier(["E", "A", "E"]), Quantifier(["E","A8", "E"])), #Proposition 53
-                    #    (Quantifier(["E8","A8"]), Quantifier(["E8","A"])), # Proposition 55
-                    #    (Quantifier(["A","A8","A"]), Quantifier(["E8","A8","A"])), #Proposition 56
-                    #    (Quantifier(["A","A8"]), Quantifier(["E8","A8"])), #Proposition 57
-                    #    (Quantifier(["A","E","A"]), Quantifier(["A","E8","A"])),# Diagram 3
-                    #    (Quantifier(["A","E","A"]), Quantifier(["E8","E","A8"])),# Diagram 3
-                       ]
+    
     return (qs1, qs2) in known_relations
 
 def is_reducible_lift(qs1: Quantifier, qs2: Quantifier, debug=False):
@@ -204,10 +198,11 @@ def is_reducible(qs1 :Quantifier, qs2:Quantifier, rels:set[tuple[Quantifier,Quan
     return is_reducible_known(qs1, qs2) \
         or is_reducible_E8(qs1, qs2) \
         or is_reducible_A8(qs1, qs2) \
+        or is_reducible_lift(qs1, qs2) \
         or is_reducible_EEAA(qs1, qs2) \
         or is_reducible_redundant(qs1, qs2)\
         or is_reducible_extend(qs1, qs2, rels)\
-        or is_reducible_lift(qs1, qs2)
+        
 
 # def qs_to_id(qs):
 #     id = 0
@@ -290,6 +285,20 @@ def generate_graph(n):
                 
     return nodes,rels
         
+        
+known_relations = {
+                        # (Quantifier(["E"]), Quantifier(["E8"])),
+                    #    (Quantifier(["A"]), Quantifier(["A8"])),
+                    #    (Quantifier(["A"]), Quantifier(["E8"])),
+                    #    (Quantifier(["E"]), Quantifier(["A8"])),
+                       (Quantifier(["A","E"]), Quantifier(["E8"])), #Result from PI_2 classification
+                    #    (Quantifier(["E", "A", "E"]), Quantifier(["E","A8", "E"])), #Proposition 53
+                       (Quantifier(["E8","A8"]), Quantifier(["E8","A"])), # Proposition 55
+                    #    (Quantifier(["A","A8","A"]), Quantifier(["E8","A8","A"])), #Proposition 56
+                    #    (Quantifier(["A","A8"]), Quantifier(["E8","A8"])), #Proposition 57
+                    #    (Quantifier(["A","E","A"]), Quantifier(["A","E8","A"])),# Diagram 3
+                    #    (Quantifier(["A","E","A"]), Quantifier(["E8","E","A8"])),# Diagram 3
+    }
 
 if __name__ == "__main__":
     n = int(sys.argv[1])
