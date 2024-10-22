@@ -3,7 +3,7 @@ import networkx as nx
 import itertools
 import matplotlib.pyplot as plt
 import json
-from quantifier import unify, qs_to_str, level, replace_A8, replace_E8, Quantifier
+from src.quantifier import unify, qs_to_str, level, replace_A8, replace_E8, Quantifier
 
 if __name__ == "__main__":
     heirarchy = ("S", '3')
